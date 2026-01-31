@@ -42,7 +42,9 @@ impl TerminalUI {
     }
     
     pub fn poll_event(&self) -> Result<Option<KeyEvent>> {
-        if event::poll(std::time::Duration::from_millis(16))? {
+        // Use a zero timeout to make this non-blocking
+        // The main loop manages frame timing via thread::sleep
+        if event::poll(std::time::Duration::from_micros(0))? {
             if let Event::Key(key) = event::read()? {
                 return Ok(Some(key));
             }
