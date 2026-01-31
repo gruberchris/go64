@@ -107,6 +107,45 @@ You can test the emulator's functionality by typing this BASIC program to cycle 
 120 END
 ```
 
+## Writing Assembly Code
+
+The C64 did not come with a built-in assembler or monitor. To run machine code, users typically wrote BASIC loaders that `POKE`d values directly into memory. You can do the same here!
+
+### Example: Instant Purple Border (Machine Code)
+
+This BASIC program writes a tiny machine code routine to memory address 49152 (`$C000`) that changes the border color to purple (Color 5) and returns.
+
+```basic
+10 REM === HAND ASSEMBLED CODE ===
+20 FOR A = 49152 TO 49158
+30 READ B : POKE A,B
+40 NEXT A
+50 PRINT "CODE LOADED. TYPE SYS 49152 TO RUN"
+60 END
+100 DATA 169, 5      :REM LDA #5   (Load Accumulator with color 5/Purple)
+110 DATA 141, 32, 208:REM STA $D020(Store Accumulator into Border Color)
+120 DATA 96          :REM RTS      (Return To Basic)
+```
+
+**To Run:**
+1.  Type `RUN` (This POKEs the code into memory).
+2.  Type `SYS 49152` (This executes the machine code).
+    *   *Result:* The border will turn purple instantly.
+
+### Using a Machine Language Monitor
+
+For serious assembly development, C64 programmers used "Monitor" programs. You can do this too:
+
+1.  **Download** a C64 monitor program (e.g., **SuperMon 64** or **Micromon**) as a `.prg` file.
+2.  **Place** the file in your emulator's disk folder: `~/.go64/1541/`.
+3.  **Load** it using the emulator:
+    ```basic
+    LOAD "SUPERMON",8,1
+    ```
+4.  **Start** the monitor (often with a `SYS` command provided by the tool's documentation, e.g., `SYS 32768`).
+
+This gives you a native environment to inspect memory, disassemble code, and write assembly instructions directly.
+
 ## Development
 
 ### Building
