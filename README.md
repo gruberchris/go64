@@ -44,10 +44,22 @@ A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emula
 | :--- | :--- | :--- |
 | **CPU** | ✅ Working | Full MOS 6502 instruction set (unofficial opcodes not yet supported). |
 | **Memory** | ✅ Working | Complete 64KB RAM + ROM Banking (BASIC/KERNAL/IO switching). |
-| **VIC-II** | ⚠️ Partial | **Text Mode only**. Authentic PAL color palette. No Sprites or Bitmaps. |
+| **VIC-II** | ⚠️ Text Only | Authentic PAL color palette. No Sprites or Bitmaps (see Limitations). |
 | **CIA** | ⚠️ Partial | Timers A/B, IRQs, and Keyboard Matrix implemented. No Serial Bus (IEC). |
-| **SID** | ❌ Missing | No sound support yet. |
+| **SID** | ❌ Not Planned | No sound support (see Limitations). |
 | **Storage** | ✅ Working | **Device 8** (Disk) mapped to `~/.go64/1541/`. Tape (Device 1) not supported. |
+
+## Limitations & Technical Constraints
+
+This emulator is built as a **Terminal User Interface (TUI)** application. This design choice imposes specific limitations compared to graphical emulators like VICE:
+
+### 1. Graphics (VIC-II)
+*   **Text Mode Only:** The emulator renders into a grid of characters. It cannot natively display the C64's pixel-perfect hardware **Sprites**, smooth scrolling, or high-resolution **Bitmap Modes** (320x200).
+*   **Result:** Games relying on sprites or bitmapped graphics will execute logically (CPU instructions run correctly), but the visuals will not appear on screen. Text adventures and BASIC programs work perfectly.
+
+### 2. Sound (SID)
+*   **No Audio:** The MOS 6581 SID chip is a complex analog/digital synthesizer. Accurate emulation requires cycle-exact synchronization between the 1MHz CPU and host audio buffers, plus complex waveform mathematics.
+*   **Reason:** Implementing audio in a TUI environment introduces significant complexity (threading, ring buffers, latency management) that falls outside the scope of this project's goal: a lightweight, terminal-based emulator.
 
 ## Storage (Virtual 1541)
 
