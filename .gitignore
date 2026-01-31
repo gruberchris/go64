@@ -1,0 +1,9 @@
+/target
+/roms
+*.bin
+*.rom
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.tmp
