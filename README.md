@@ -1,105 +1,95 @@
 # go64 - Commodore 64 Emulator
 
-A Commodore 64 emulator written in Rust with a terminal-based UI.
+A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emulates the MOS 6502 CPU, VIC-II video chip, and CIA timers to run the original C64 KERNAL and BASIC V2 operating system in your terminal.
 
-## Status
+## Getting Started
 
-**Phase 4 Complete!** - ROM Loading & CPU Execution! ✅
+### Prerequisites
+1.  **Rust Toolchain**: Install via [rustup.rs](https://rustup.rs).
+2.  **C64 ROM Files**: You must provide the original Commodore 64 ROMs (BASIC, KERNAL, and CHAR).
 
-### Completed
-- ✅ **Phase 1 - 6502 CPU Core** (all 56 opcodes, 21 tests passing)
-- ✅ **Phase 2 - Memory System** (C64 memory map with ROM banking)
-- ✅ **Phase 3 - VIC-II & Terminal UI** (40x25 screen, authentic colors, centered layout)
-- ✅ **Phase 4 - ROM Loading & Execution**
-  - ROM file loading from `roms/` directory
-  - Automatic ROM validation (correct sizes)
-  - CPU execution loop (~1000 cycles/frame)
-  - RESET vector support
-  - Demo mode (works without ROMs)
-  - Helpful error messages and instructions
+### Setup
 
-### Current State
-The emulator is **feature-complete for booting C64 BASIC**! It just needs the ROM files.
+1.  **Clone the repository:**
+    ```bash
+    git clone https://github.com/yourusername/go64.git
+    cd go64
+    ```
 
-**What works RIGHT NOW:**
-- Full 6502 CPU emulation
-- Complete C64 memory system
-- Terminal UI with authentic C64 colors
-- ROM loading infrastructure
-- CPU execution at ~60fps
+2.  **Install ROMs:**
+    Create a `roms/` directory in the project root and copy the following files into it:
+    *   `basic.rom` (8KB) - The BASIC V2 Interpreter
+    *   `kernal.rom` (8KB) - The C64 Operating System
+    *   `char.rom` (4KB) - The Character Set Generator
 
-**What's needed to boot BASIC:**
-- Place C64 ROM files in `roms/` directory (see `roms/README.md`)
-- ROMs will be loaded automatically on startup
-- CPU will execute KERNAL bootup sequence
-- BASIC should display and run
+    *Note: These files can be extracted from other emulators like VICE or downloaded from C64 preservation sites.*
 
-### Next - Phase 5: Keyboard Input & KERNAL I/O
-- CIA chip emulation (keyboard matrix)
-- KERNAL I/O hooks
-- Character input/output
-- Type into BASIC!
+3.  **Run the Emulator:**
+    ```bash
+    cargo run --release
+    ```
 
-### Planned
-- Memory system with C64 memory map
-- VIC-II graphics chip (text mode)
-- Keyboard input
-- BASIC ROM integration
-- Terminal UI with ratatui
-- Full instruction set
-- C64 ROM integration
-- And much more...
+## Controls
 
-## Building
+*   **ESC**: Quit the emulator
+*   **F1**: Toggle Debug Overlay (CPU registers, PC, cycles)
+*   **PageUp**: `RESTORE` key (triggers NMI for soft reset)
+*   **F5**: Toggle CPU execution (pause/resume)
+*   **Typing**: Maps your PC keyboard to the C64 keyboard matrix.
 
-```bash
-cargo build
+## Emulation Status
+
+| System | Status | Details |
+| :--- | :--- | :--- |
+| **CPU** | ✅ Working | Full MOS 6502 instruction set (unofficial opcodes not yet supported). |
+| **Memory** | ✅ Working | Complete 64KB RAM + ROM Banking (BASIC/KERNAL/IO switching). |
+| **VIC-II** | ⚠️ Partial | **Text Mode only**. Authentic PAL color palette. No Sprites or Bitmaps. |
+| **CIA** | ⚠️ Partial | Timers A/B, IRQs, and Keyboard Matrix implemented. No Serial Bus (IEC). |
+| **SID** | ❌ Missing | No sound support yet. |
+| **Storage** | ❌ Missing | No disk drive (1541) or tape emulation. Programs live in RAM only. |
+
+## Example: Testing Colors
+
+You can test the emulator's functionality by typing this BASIC program to cycle border and background colors:
+
+```basic
+10 REM === COLOR & TEXT TEST ===
+20 PRINT CHR$(147)
+30 FOR I = 0 TO 15
+40 POKE 53280, I
+50 POKE 53281, 15-I
+60 POKE 646, I
+70 PRINT "COLOR TEST " I
+80 FOR J = 0 TO 200 : NEXT J
+90 NEXT I
+100 POKE 53280, 14 : POKE 53281, 6 : POKE 646, 14
+110 PRINT "TEST COMPLETE."
+120 END
 ```
 
-## Running
+## Development
 
-### Without ROMs (Demo Mode)
+### Building
+To build the project executable without running it (useful for checking compilation errors):
+
 ```bash
-cargo run
+cargo build --release
 ```
 
-Shows a static BASIC screen. Press ESC to quit.
+*Note: The `--release` flag is highly recommended for performance. The emulator relies on being able to execute ~1 million cycles per second, which debug builds may struggle to maintain.*
 
-### With C64 ROMs (Full Emulation)
-
-1. **Get ROM files** - See `roms/README.md` for instructions
-2. **Place ROMs in `roms/` directory**:
-   - `roms/basic.rom` (8KB)
-   - `roms/kernal.rom` (8KB)
-   - `roms/char.rom` (4KB)
-3. **Run**:
-```bash
-cargo run
-```
-
-The emulator will:
-- Load ROMs automatically
-- Reset the 6502 CPU
-- Execute the KERNAL boot sequence
-- Display the actual C64 BASIC screen
-
-### Controls
-- `ESC` - Quit emulator
-- `F5` - Reset CPU
-
-## Testing
+### Running Unit Tests
+The project includes a comprehensive suite of unit tests, particularly for the CPU instruction set. To run them:
 
 ```bash
 cargo test
 ```
 
-## Project Goals
+To run only the CPU tests:
 
-- Authentic C64 experience capable of running actual C64 games and code
-- Type BASIC programs and run them
-- Execute 6502 machine code via POKE/SYS
-- Modern conveniences (fast loading, no tape delay simulation)
-- Terminal-based UI using ratatui
+```bash
+cargo test cpu
+```
 
 ## Architecture
 
