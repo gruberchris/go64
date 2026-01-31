@@ -317,10 +317,12 @@ fn run_with_ui(_debug: bool) -> Result<()> {
             
             let cycles_this_frame = CYCLES_PER_FRAME;
             
-            for _ in 0..cycles_this_frame {
+            let mut executed_cycles = 0;
+            while executed_cycles < cycles_this_frame {
                 // Execute one CPU instruction
                 match cpu.step(&mut memory) {
                     Ok(cycles) => {
+                        executed_cycles += cycles as u64;
                         // Tick CIA timers based on actual cycles executed
                         let irq1 = memory.cia1.tick(cycles);
                         let irq2 = memory.cia2.tick(cycles);
