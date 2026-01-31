@@ -211,9 +211,40 @@ pub fn screen_code_to_char(code: u8) -> char {
         61 => '=',
         62 => '>',
         63 => '?',
-        64 => '─', // Horizontal line
-        // Reversed/Inverse characters (simplified mapping)
-        128..=159 => screen_code_to_char(code - 128), 
+        65 => '♠',
+        66 => '│', // Vertical bar
+        67 => '─', // Horizontal bar
+        68 => '─',
+        69 => '─',
+        70 => '─',
+        71 => '│',
+        72 => '│',
+        73 => '╯', // Curved corner or similar
+        74 => '╮',
+        75 => '╰',
+        76 => '╭',
+        77 => '╲', // Diagonal
+        78 => '╱',
+        79 => '╳',
+        80 => '●', // Circle
+        81 => '●',
+        82 => '○',
+        83 => '♥',
+        84 => '─',
+        85 => '╭',
+        86 => '╳',
+        87 => '○',
+        88 => '♣',
+        89 => '─',
+        90 => '♦',
+        91 => '+',
+        92 => '│',
+        93 => '│',
+        94 => 'π',
+        95 => '◥', // Triangle?
+        160 => '█', // Shift+Space / Reverse Space (Cursor)
+        // Reversed/Inverse characters (recurse to base char)
+        128..=255 => screen_code_to_char(code & 0x7F), 
         // Default fallback
         _ => '▒',
     }

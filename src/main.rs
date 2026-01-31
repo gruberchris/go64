@@ -302,6 +302,14 @@ fn run_with_ui(_debug: bool) -> Result<()> {
                         for (row, col) in positions {
                             memory.cia1.set_key(row, col, true);
                         }
+
+                        // Handle modifiers (SHIFT)
+                        // If host shift is pressed, press C64 Left Shift (1, 7)
+                        // This enables SHIFT+HOME (Clear Screen) and other combos
+                        use crossterm::event::KeyModifiers;
+                        if key.modifiers.contains(KeyModifiers::SHIFT) {
+                            memory.cia1.set_key(1, 7, true);
+                        }
                     }
                 }
             }
