@@ -33,7 +33,8 @@ A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emula
 
 *   **ESC**: Quit the emulator
 *   **F1**: Toggle Debug Overlay (CPU registers, PC, cycles)
-*   **PageUp**: `RESTORE` key (triggers NMI for soft reset)
+*   **PageUp**: `RESTORE` key (triggers NMI).
+*   **Tab**: `RUN/STOP` key. (Hold `Tab` + Press `PageUp` for Soft Reset/Restore).
 *   **F5**: Toggle CPU execution (pause/resume)
 *   **Typing**: Maps your PC keyboard to the C64 keyboard matrix.
 
@@ -46,7 +47,22 @@ A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emula
 | **VIC-II** | ⚠️ Partial | **Text Mode only**. Authentic PAL color palette. No Sprites or Bitmaps. |
 | **CIA** | ⚠️ Partial | Timers A/B, IRQs, and Keyboard Matrix implemented. No Serial Bus (IEC). |
 | **SID** | ❌ Missing | No sound support yet. |
-| **Storage** | ❌ Missing | No disk drive (1541) or tape emulation. Programs live in RAM only. |
+| **Storage** | ✅ Working | **Device 8** (Disk) mapped to `~/.go64/1541/`. Tape (Device 1) not supported. |
+
+## Storage (Virtual 1541)
+
+The emulator provides High-Level Emulation (HLE) of a 1541 Disk Drive on **Device 8**.
+
+*   **Filesystem Location:** `~/.go64/1541/`
+*   **Supported Commands:**
+    *   `LOAD "$",8` - List directory
+    *   `LOAD "FILENAME",8` - Load a program
+    *   `SAVE "FILENAME",8` - Save a program
+*   **Tape (Device 1):** Not supported (returns `DEVICE NOT PRESENT` error).
+
+**Note:** C64 filenames are automatically sanitized to work on your host OS:
+*   Special characters (`/`, `\`, `:`, `*`, `?`, etc.) are replaced with `_`.
+*   `.prg` extension is automatically appended if missing.
 
 ## Debugging
 
@@ -60,7 +76,9 @@ Press **F1** at any time to toggle the debug overlay. This will:
 ### Debug Controls
 *   **F1**: Toggle the debug overlay on/off.
 *   **F5**: **Pause/Resume execution**. Use this to freeze the emulator state for inspection.
-*   **PgUp (Page Up)**: Trigger **NMI** (Non-Maskable Interrupt). This simulates pressing the `RESTORE` key on a real C64. It is useful for breaking out of stuck loops if the KERNAL's NMI handler is functioning.
+*   **PageUp**: **RESTORE** (NMI).
+*   **Tab**: **RUN/STOP**.
+    *   **Soft Reset:** Hold `Tab` (Run/Stop) and press `PageUp` (Restore) to reset the computer (clear screen, reset colors) without rebooting.
 *   **ESC**: Quit the emulator.
 
 ### Typical Debugging Workflow

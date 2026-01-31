@@ -26,8 +26,8 @@ pub struct Cia {
     timer_b: u16,
     
     // Keyboard matrix (8x8 = 64 keys)
-    // keyboard_matrix[row][col] where row is selected by PRA, col is read from PRB
-    keyboard_matrix: [[bool; 8]; 8],
+    // keyboard_matrix[row][col] is a counter: 0 = not pressed, >0 = pressed (frames remaining)
+    keyboard_matrix: [[u8; 8]; 8],
 }
 
 impl Cia {
@@ -52,7 +52,7 @@ impl Cia {
             crb: 0,
             timer_a: 0x4025,  // 16421 cycles for 60Hz at 1MHz
             timer_b: 0xFFFF,
-            keyboard_matrix: [[false; 8]; 8],  // No keys pressed initially
+            keyboard_matrix: [[0; 8]; 8],  // No keys pressed initially
         }
     }
     
@@ -250,7 +250,7 @@ impl Cia {
             if (self.pra & (1 << row)) == 0 {
                 // Check each column in this row
                 for col in 0..8 {
-                    if self.keyboard_matrix[row][col] {
+                    if self.keyboard_matrix[row][col] > 0 {
                         // Key is pressed - clear the bit (active low)
                         result &= !(1 << col);
                     }
@@ -263,11 +263,28 @@ impl Cia {
     
     pub fn set_key(&mut self, row: u8, col: u8, pressed: bool) {
         if row < 8 && col < 8 {
-            self.keyboard_matrix[row as usize][col as usize] = pressed;
+            if pressed {
+                // Set persistence to 5 frames (approx 83ms) to ensure
+                // KERNAL sees it even if input polling frequency < 60Hz or scan is missed
+                self.keyboard_matrix[row as usize][col as usize] = 5;
+            } else {
+                self.keyboard_matrix[row as usize][col as usize] = 0;
+            }
         }
     }
     
+    pub fn decay_keyboard(&mut self) {
+        for row in 0..8 {
+            for col in 0..8 {
+                if self.keyboard_matrix[row][col] > 0 {
+                    self.keyboard_matrix[row][col] -= 1;
+                }
+            }
+        }
+    }
+    
+    // Legacy support for clear_keyboard, now just calls decay
     pub fn clear_keyboard(&mut self) {
-        self.keyboard_matrix = [[false; 8]; 8];
+        self.decay_keyboard();
     }
 }

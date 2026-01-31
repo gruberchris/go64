@@ -102,6 +102,27 @@ impl Cpu {
     }
 
     pub fn step(&mut self, memory: &mut dyn crate::memory::Memory) -> Result<u8> {
+        // HLE Traps for Storage
+        match self.pc {
+            0xFFD5 => {
+                // LOAD Trap
+                if self.handle_load(memory)? {
+                    // RTS behavior: Pull PC from stack
+                    self.pc = self.pop_word(memory).wrapping_add(1);
+                    return Ok(6); // Arbitrary cycle count
+                }
+            }
+            0xFFD8 => {
+                // SAVE Trap
+                if self.handle_save(memory)? {
+                    // RTS behavior: Pull PC from stack
+                    self.pc = self.pop_word(memory).wrapping_add(1);
+                    return Ok(6); // Arbitrary cycle count
+                }
+            }
+            _ => {}
+        }
+
         let opcode = memory.read(self.pc);
         self.pc = self.pc.wrapping_add(1);
         
@@ -109,6 +130,201 @@ impl Cpu {
         self.cycles += cycles as u64;
         
         Ok(cycles)
+    }
+
+    // Handle KERNAL LOAD ($FFD5)
+    fn handle_load(&mut self, memory: &mut dyn crate::memory::Memory) -> Result<bool> {
+        // Arguments:
+        // A = 0: Load, 1: Verify
+        // X/Y = Load Address (if secondary address = 0)
+        
+        // Zero Page:
+        // $BA: Device Number
+        // $BB/$BC: Pointer to Filename
+        // $B7: Filename Length
+        // $90: Status Word (ST)
+        
+        let device = memory.read(0xBA);
+        
+        // Tape (Device 1) - Not Supported
+        if device == 1 {
+            self.status.carry = true; // Error
+            self.a = 5; // DEVICE NOT PRESENT
+            return Ok(true);
+        }
+        
+        // Disk (Device 8)
+        if device == 8 {
+            let fn_len = memory.read(0xB7) as u16;
+            let fn_ptr_lo = memory.read(0xBB) as u16;
+            let fn_ptr_hi = memory.read(0xBC) as u16;
+            let fn_ptr = (fn_ptr_hi << 8) | fn_ptr_lo;
+            
+            let mut filename = Vec::new();
+            for i in 0..fn_len {
+                filename.push(memory.read(fn_ptr + i));
+            }
+            
+            // Check for Directory Listing "$"
+            if filename.len() == 1 && filename[0] == b'$' {
+                match crate::storage::list_directory() {
+                    Ok((start_addr, data)) => {
+                        // Standard LOAD logic
+                        let sec_addr = memory.read(0xB9);
+                        let load_addr = if sec_addr == 0 {
+                            (self.x as u16) | ((self.y as u16) << 8)
+                        } else {
+                            start_addr
+                        };
+                        
+                        // Write data
+                        for (i, byte) in data.iter().enumerate() {
+                            memory.write(load_addr + i as u16, *byte);
+                        }
+                        
+                        // Update Pointers
+                        let end_addr = load_addr + data.len() as u16;
+                        memory.write(0xAE, (end_addr & 0xFF) as u8);
+                        memory.write(0xAF, ((end_addr >> 8) & 0xFF) as u8);
+                        memory.write(0x2D, (end_addr & 0xFF) as u8);
+                        memory.write(0x2E, ((end_addr >> 8) & 0xFF) as u8);
+                        
+                        // Success
+                        self.status.carry = false;
+                        self.x = (end_addr & 0xFF) as u8;
+                        self.y = ((end_addr >> 8) & 0xFF) as u8;
+                        
+                        return Ok(true);
+                    }
+                    Err(_) => {
+                        self.status.carry = true;
+                        self.a = 4; // FILE NOT FOUND
+                        return Ok(true);
+                    }
+                }
+            }
+            
+            // Try to load file
+            match crate::storage::load_prg(&filename) {
+                Ok((start_addr, data)) => {
+                    // Check Secondary Address ($B9)
+                    // 0 = Load to address in X/Y
+                    // 1 = Load to address in file header
+                    let sec_addr = memory.read(0xB9);
+                    
+                    let load_addr = if sec_addr == 0 {
+                        // Use X/Y
+                        (self.x as u16) | ((self.y as u16) << 8)
+                    } else {
+                        // Use file header
+                        start_addr
+                    };
+                    
+                    // Write data to memory
+                    for (i, byte) in data.iter().enumerate() {
+                        memory.write(load_addr + i as u16, *byte);
+                    }
+                    
+                    // Update End Address Pointers
+                    let end_addr = load_addr + data.len() as u16;
+                    
+                    // $AE/$AF = End Address
+                    memory.write(0xAE, (end_addr & 0xFF) as u8);
+                    memory.write(0xAF, ((end_addr >> 8) & 0xFF) as u8);
+                    
+                    // $2D/$2E = End of Basic Variables (for BASIC LOAD)
+                    memory.write(0x2D, (end_addr & 0xFF) as u8);
+                    memory.write(0x2E, ((end_addr >> 8) & 0xFF) as u8);
+                    
+                    // Success
+                    self.status.carry = false;
+                    self.x = (end_addr & 0xFF) as u8;
+                    self.y = ((end_addr >> 8) & 0xFF) as u8;
+                    
+                    return Ok(true);
+                },
+                Err(_) => {
+                    self.status.carry = true; // Error
+                    self.a = 4; // FILE NOT FOUND
+                    return Ok(true);
+                }
+            }
+        }
+        
+        // Let other devices fall through to standard KERNAL (which will fail for now)
+        Ok(false)
+    }
+
+    // Handle KERNAL SAVE ($FFD8)
+    fn handle_save(&mut self, memory: &mut dyn crate::memory::Memory) -> Result<bool> {
+        // Arguments:
+        // A = Zero Page pointer to Start Address
+        // X/Y = End Address
+        
+        // Zero Page:
+        // $BA: Device Number
+        // $BB/$BC: Pointer to Filename
+        // $B7: Filename Length
+        
+        let device = memory.read(0xBA);
+        
+        // Tape (Device 1) - Not Supported
+        if device == 1 {
+            self.status.carry = true; // Error
+            self.a = 5; // DEVICE NOT PRESENT
+            return Ok(true);
+        }
+        
+        // Disk (Device 8)
+        if device == 8 {
+            // Get Filename
+            let fn_len = memory.read(0xB7) as u16;
+            let fn_ptr_lo = memory.read(0xBB) as u16;
+            let fn_ptr_hi = memory.read(0xBC) as u16;
+            let fn_ptr = (fn_ptr_hi << 8) | fn_ptr_lo;
+            
+            let mut filename = Vec::new();
+            for i in 0..fn_len {
+                filename.push(memory.read(fn_ptr + i));
+            }
+            
+            // Get Start Address (Indirect from ZP address in A)
+            let start_ptr = self.a as u16;
+            let start_addr = (memory.read(start_ptr) as u16) | ((memory.read(start_ptr + 1) as u16) << 8);
+            
+            // Get End Address (from X/Y)
+            // Note: KERNAL SAVE End Address is inclusive? No, typically it's exclusive or points to last byte.
+            // Documentation says: X/Y = End Address.
+            // Usually interpreted as: Start inclusive, End exclusive? 
+            // Actually C64 KERNAL SAVE routine usually expects End Address to be +1 byte.
+            let end_addr = (self.x as u16) | ((self.y as u16) << 8);
+            
+            if end_addr <= start_addr {
+                 self.status.carry = true;
+                 return Ok(true);
+            }
+            
+            // Read Data
+            let mut data = Vec::new();
+            for addr in start_addr..end_addr {
+                data.push(memory.read(addr));
+            }
+            
+            // Save
+            match crate::storage::save_prg(&filename, start_addr, &data) {
+                Ok(_) => {
+                    self.status.carry = false;
+                    return Ok(true);
+                },
+                Err(_) => {
+                    self.status.carry = true;
+                    self.a = 26; // WRITE PROTECT ON (Generic error)
+                    return Ok(true);
+                }
+            }
+        }
+        
+        Ok(false)
     }
     
     // IRQ interrupt request

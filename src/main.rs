@@ -8,6 +8,7 @@ mod basic;
 mod ui;
 mod debugger;
 mod keyboard;
+mod storage;
 
 use anyhow::Result;
 use clap::Parser;
@@ -42,6 +43,9 @@ fn run_headless(debug: bool) -> Result<()> {
     use memory::Memory;
     println!("go64 - Commodore 64 Emulator (Headless Mode)");
     println!("Initializing...");
+    
+    // Initialize storage
+    storage::init()?;
 
     let mut cpu = cpu::Cpu::new();
     let mut memory = memory::C64Memory::new();
@@ -161,6 +165,9 @@ fn run_headless(debug: bool) -> Result<()> {
 }
 
 fn run_with_ui(_debug: bool) -> Result<()> {
+    // Initialize storage
+    storage::init()?;
+
     // Try to load ROMs
     io::create_rom_directory_if_missing()?;
     
@@ -229,7 +236,7 @@ fn run_with_ui(_debug: bool) -> Result<()> {
     let mut _frame_count = 0;
     let mut show_debug = false;  // Hide debug info by default, toggle with F1
     
-    loop {
+    'mainloop: loop {
         // Render the screen
         ui.render(|frame| {
             if show_debug {
@@ -248,9 +255,12 @@ fn run_with_ui(_debug: bool) -> Result<()> {
         })?;
         
         // Handle input
-        if let Some(key) = ui.poll_event()? {
+        while let Some(key) = ui.poll_event()? {
             match key.code {
-                KeyCode::Esc => break,
+                KeyCode::Esc => {
+                    // Quit the emulator
+                    break 'mainloop;
+                },
                 KeyCode::F(1) => {
                     // Toggle debug view
                     show_debug = !show_debug;
@@ -272,6 +282,11 @@ fn run_with_ui(_debug: bool) -> Result<()> {
                 KeyCode::PageUp => {
                     // RESTORE key simulation (NMI)
                     cpu.nmi(&mut memory);
+                }
+                KeyCode::Tab => {
+                     // Explicitly handle Tab as Run/Stop for clarity, though map_key handles it too
+                     // This ensures it gets registered if map_key is missed or we want debug logic
+                     memory.cia1.set_key(7, 7, true); 
                 }
                 _ => {
                     // Map terminal key to C64 keyboard matrix

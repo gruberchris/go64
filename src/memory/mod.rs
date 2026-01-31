@@ -428,25 +428,27 @@ impl Memory for C64Memory {
     }
 }
 
-// // Simple memory for testing
-// pub struct BasicMemory {
-//     ram: [u8; 0x10000], // 64KB
-// }
-// 
-// impl BasicMemory {
-//     pub fn new() -> Self {
-//         Self {
-//             ram: [0; 0x10000],
-//         }
-//     }
-// }
-// 
-// impl Memory for BasicMemory {
-//     fn read(&self, addr: u16) -> u8 {
-//         self.ram[addr as usize]
-//     }
-// 
-//     fn write(&mut self, addr: u16, value: u8) {
-//         self.ram[addr as usize] = value;
-//     }
-// }
+// Simple memory for testing
+#[allow(dead_code)]
+pub struct BasicMemory {
+    ram: [u8; 0x10000], // 64KB
+}
+
+impl BasicMemory {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        Self {
+            ram: [0; 0x10000],
+        }
+    }
+}
+
+impl Memory for BasicMemory {
+    fn read(&self, addr: u16) -> u8 {
+        self.ram[addr as usize]
+    }
+
+    fn write(&mut self, addr: u16, value: u8) {
+        self.ram[addr as usize] = value;
+    }
+}

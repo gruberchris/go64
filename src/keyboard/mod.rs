@@ -102,6 +102,7 @@ pub fn map_key(key: KeyCode) -> Option<Vec<MatrixPosition>> {
         KeyCode::Char('"') => Some(vec![(1, 7), (7, 3)]),  // SHIFT + 2
         KeyCode::Char(' ') => Some(vec![(7, 4)]),          // SPACE
         KeyCode::Char('q') | KeyCode::Char('Q') => Some(vec![(7, 6)]),
+        KeyCode::Tab => Some(vec![(7, 7)]),                // Run/Stop
         
         _ => None,
     }
