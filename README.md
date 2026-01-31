@@ -48,6 +48,28 @@ A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emula
 | **SID** | ❌ Missing | No sound support yet. |
 | **Storage** | ❌ Missing | No disk drive (1541) or tape emulation. Programs live in RAM only. |
 
+## Debugging
+
+The emulator includes a built-in debug overlay for inspecting the internal state of the 6502 CPU and emulator.
+
+### Using the Debug Overlay
+Press **F1** at any time to toggle the debug overlay. This will:
+1.  Add a status bar to the bottom of the screen.
+2.  Display real-time CPU register values (PC, A, X, Y, SP) and cycle count.
+
+### Debug Controls
+*   **F1**: Toggle the debug overlay on/off.
+*   **F5**: **Pause/Resume execution**. Use this to freeze the emulator state for inspection.
+*   **PgUp (Page Up)**: Trigger **NMI** (Non-Maskable Interrupt). This simulates pressing the `RESTORE` key on a real C64. It is useful for breaking out of stuck loops if the KERNAL's NMI handler is functioning.
+*   **ESC**: Quit the emulator.
+
+### Typical Debugging Workflow
+1.  **Freeze State**: Press `F5` to pause execution.
+2.  **Inspect Registers**: Check the **PC** (Program Counter) to see where execution has stopped.
+    *   If PC is stuck in a tight loop (e.g., waiting for a bit to change), you might see the address barely changing.
+    *   Check **A/X/Y** registers to verify logic values.
+3.  **Reset/Restore**: If the system is unresponsive, press `PgUp` (NMI) to attempt a soft reset via the KERNAL.
+
 ## Example: Testing Colors
 
 You can test the emulator's functionality by typing this BASIC program to cycle border and background colors:
