@@ -166,13 +166,13 @@ impl Cpu {
     }
     
     // Check if PC is about to call a KERNAL routine we want to intercept
-    pub fn check_kernal_call(&self) -> Option<u16> {
-        match self.pc {
-            0xFFE4 => Some(0xFFE4), // GETIN
-            0xFFD2 => Some(0xFFD2), // CHROUT
-            _ => None
-        }
-    }
+    // pub fn check_kernal_call(&self) -> Option<u16> {
+    //     match self.pc {
+    //         0xFFE4 => Some(0xFFE4), // GETIN
+    //         0xFFD2 => Some(0xFFD2), // CHROUT
+    //         _ => None
+    //     }
+    // }
 
     // Stack operations
     pub fn push(&mut self, memory: &mut dyn crate::memory::Memory, value: u8) {

@@ -219,34 +219,34 @@ pub fn screen_code_to_char(code: u8) -> char {
     }
 }
 
-// PETSCII to ASCII conversion (simplified)
-pub fn petscii_to_char(petscii: u8) -> char {
-    match petscii {
-        0x00..=0x1F => ' ', // Control characters as space
-        0x20..=0x3F => (petscii as char), // Standard ASCII
-        0x40 => '@',
-        0x41..=0x5A => (petscii as char), // A-Z
-        0x5B => '[',
-        0x5C => '£', // Pound sign
-        0x5D => ']',
-        0x5E => '↑', // Up arrow
-        0x5F => '←', // Left arrow
-        0x60 => '─', // Horizontal line
-        0x61..=0x7A => ((petscii - 0x20) as char), // a-z (lowercase in C64 is uppercase+32)
-        0x7B => '+',
-        0x7C => '|',
-        0x7D => '}',
-        0x7E => '~',
-        0x7F => ' ',
-        0x80..=0xFF => {
-            // Inverted/graphics characters - use ASCII approximations
-            if petscii == 0xA0 {
-                '█' // Cursor - solid block
-            } else if petscii >= 0xA0 && petscii <= 0xBF {
-                ((petscii - 0x80) as char)
-            } else {
-                '▒' // Use block for graphics chars
-            }
-        }
-    }
-}
+// // PETSCII to ASCII conversion (simplified)
+// pub fn petscii_to_char(petscii: u8) -> char {
+//     match petscii {
+//         0x00..=0x1F => ' ', // Control characters as space
+//         0x20..=0x3F => (petscii as char), // Standard ASCII
+//         0x40 => '@',
+//         0x41..=0x5A => (petscii as char), // A-Z
+//         0x5B => '[',
+//         0x5C => '£', // Pound sign
+//         0x5D => ']',
+//         0x5E => '↑', // Up arrow
+//         0x5F => '←', // Left arrow
+//         0x60 => '─', // Horizontal line
+//         0x61..=0x7A => ((petscii - 0x20) as char), // a-z (lowercase in C64 is uppercase+32)
+//         0x7B => '+',
+//         0x7C => '|',
+//         0x7D => '}',
+//         0x7E => '~',
+//         0x7F => ' ',
+//         0x80..=0xFF => {
+//             // Inverted/graphics characters - use ASCII approximations
+//             if petscii == 0xA0 {
+//                 '█' // Cursor - solid block
+//             } else if petscii >= 0xA0 && petscii <= 0xBF {
+//                 ((petscii - 0x80) as char)
+//             } else {
+//                 '▒' // Use block for graphics chars
+//             }
+//         }
+//     }
+// }

@@ -5,9 +5,9 @@ pub trait Memory {
     fn write(&mut self, addr: u16, value: u8);
     
     // For VIC-II access
-    fn read_vic(&self, addr: u16) -> u8 {
-        self.read(addr)
-    }
+    // fn read_vic(&self, addr: u16) -> u8 {
+    //    self.read(addr)
+    // }
 }
 
 // C64 Memory Map:
@@ -100,163 +100,163 @@ impl C64Memory {
         bits == 0x01 || bits == 0x03
     }
     
-    /// Scan keyboard and update keyboard buffer (simulates KERNAL keyboard scanner)
-    /// This should be called ~60 times per second (during IRQ handling)
-    pub fn scan_keyboard(&mut self) {
-        // Keyboard buffer is at $0277-$0280 (10 bytes)
-        // $C6 = number of characters in buffer (NDX)
-        let buffer_len = self.ram[0xC6] as usize;
-        
-        // Don't overflow buffer
-        if buffer_len >= 10 {
-            return;
-        }
-        
-        // Scan all 8 rows of the keyboard matrix
-        for row in 0..8 {
-            // Set CIA1 Port A to scan this row (active low)
-            let row_mask = !(1 << row);
-            self.cia1.pra = row_mask;
-            
-            // Read CIA1 Port B to get column data
-            let cols = self.cia1.read_keyboard_columns();
-            
-            // Check each column for a keypress
-            for col in 0..8 {
-                if (cols & (1 << col)) == 0 {
-                    // Key is pressed (active low)
-                    // Convert row/col to C64 key code
-                    let key_code = self.matrix_to_keycode(row, col);
-                    
-                    if key_code == 0 {
-                        continue; // Skip modifier keys and special keys for now
-                    }
-                    
-                    // Check if this is a different key from last time
-                    let last_key = self.ram[0xCB];
-                    if key_code != last_key {
-                        // New key pressed - add to buffer
-                        self.ram[0xCB] = key_code;
-                        
-                        // Add to keyboard buffer
-                        let buffer_start = 0x0277;
-                        self.ram[buffer_start + buffer_len] = key_code;
-                        self.ram[0xC6] = (buffer_len + 1) as u8;
-                        
-                        // Write to debug file (don't use println - it breaks TUI)
-                        use std::fs::OpenOptions;
-                        use std::io::Write;
-                        if let Ok(mut file) = OpenOptions::new()
-                            .create(true)
-                            .append(true)
-                            .open("/tmp/go64_kbd_debug.txt") {
-                            writeln!(file, "Key pressed: row={}, col={}, code=${:02X} ({}), buffer_len={}", 
-                                     row, col, key_code, key_code as char, buffer_len + 1).ok();
-                        }
-                        
-                        return; // Only process one key per scan
-                    }
-                }
-            }
-        }
-        
-        // No keys pressed - reset last key
-        self.ram[0xCB] = 0;
-    }
+    // /// Scan keyboard and update keyboard buffer (simulates KERNAL keyboard scanner)
+    // /// This should be called ~60 times per second (during IRQ handling)
+    // pub fn scan_keyboard(&mut self) {
+    //     // Keyboard buffer is at $0277-$0280 (10 bytes)
+    //     // $C6 = number of characters in buffer (NDX)
+    //     let buffer_len = self.ram[0xC6] as usize;
+    //     
+    //     // Don't overflow buffer
+    //     if buffer_len >= 10 {
+    //         return;
+    //     }
+    //     
+    //     // Scan all 8 rows of the keyboard matrix
+    //     for row in 0..8 {
+    //         // Set CIA1 Port A to scan this row (active low)
+    //         let row_mask = !(1 << row);
+    //         self.cia1.pra = row_mask;
+    //         
+    //         // Read CIA1 Port B to get column data
+    //         let cols = self.cia1.read_keyboard_columns();
+    //         
+    //         // Check each column for a keypress
+    //         for col in 0..8 {
+    //             if (cols & (1 << col)) == 0 {
+    //                 // Key is pressed (active low)
+    //                 // Convert row/col to C64 key code
+    //                 let key_code = self.matrix_to_keycode(row, col);
+    //                 
+    //                 if key_code == 0 {
+    //                     continue; // Skip modifier keys and special keys for now
+    //                 }
+    //                 
+    //                 // Check if this is a different key from last time
+    //                 let last_key = self.ram[0xCB];
+    //                 if key_code != last_key {
+    //                     // New key pressed - add to buffer
+    //                     self.ram[0xCB] = key_code;
+    //                     
+    //                     // Add to keyboard buffer
+    //                     let buffer_start = 0x0277;
+    //                     self.ram[buffer_start + buffer_len] = key_code;
+    //                     self.ram[0xC6] = (buffer_len + 1) as u8;
+    //                     
+    //                     // Write to debug file (don't use println - it breaks TUI)
+    //                     use std::fs::OpenOptions;
+    //                     use std::io::Write;
+    //                     if let Ok(mut file) = OpenOptions::new()
+    //                         .create(true)
+    //                         .append(true)
+    //                         .open("/tmp/go64_kbd_debug.txt") {
+    //                         writeln!(file, "Key pressed: row={}, col={}, code=${:02X} ({}), buffer_len={}", 
+    //                                  row, col, key_code, key_code as char, buffer_len + 1).ok();
+    //                     }
+    //                     
+    //                     return; // Only process one key per scan
+    //                 }
+    //             }
+    //         }
+    //     }
+    //     
+    //     // No keys pressed - reset last key
+    //     self.ram[0xCB] = 0;
+    // }
     
-    /// Convert keyboard matrix position to C64 PETSCII/scan code
-    pub fn matrix_to_keycode_direct(&self, row: u8, col: u8) -> Option<u8> {
-        let code = self.matrix_to_keycode(row, col);
-        if code == 0 { None } else { Some(code) }
-    }
+    // /// Convert keyboard matrix position to C64 PETSCII/scan code
+    // pub fn matrix_to_keycode_direct(&self, row: u8, col: u8) -> Option<u8> {
+    //     let code = self.matrix_to_keycode(row, col);
+    //     if code == 0 { None } else { Some(code) }
+    // }
 
-    fn matrix_to_keycode(&self, row: u8, col: u8) -> u8 {
-        // C64 keyboard matrix to PETSCII mapping
-        // This is a simplified version - real C64 has shift/control handling
-        match (row, col) {
-            // Row 0
-            (0, 0) => 20,  // DEL
-            (0, 1) => 13,  // RETURN
-            (0, 2) => 29,  // Cursor Right
-            (0, 3) => 0,   // F7 (special)
-            (0, 4) => 0,   // F1 (special)
-            (0, 5) => 0,   // F3 (special)
-            (0, 6) => 0,   // F5 (special)
-            (0, 7) => 17,  // Cursor Down
-            
-            // Row 1: 3, W, A, 4, Z, S, E, Shift
-            (1, 0) => b'3',
-            (1, 1) => b'W',
-            (1, 2) => b'A',
-            (1, 3) => b'4',
-            (1, 4) => b'Z',
-            (1, 5) => b'S',
-            (1, 6) => b'E',
-            (1, 7) => 0,  // Left Shift (modifier)
-            
-            // Row 2: 5, R, D, 6, C, F, T, X
-            (2, 0) => b'5',
-            (2, 1) => b'R',
-            (2, 2) => b'D',
-            (2, 3) => b'6',
-            (2, 4) => b'C',
-            (2, 5) => b'F',
-            (2, 6) => b'T',
-            (2, 7) => b'X',
-            
-            // Row 3: 7, Y, G, 8, B, H, U, V
-            (3, 0) => b'7',
-            (3, 1) => b'Y',
-            (3, 2) => b'G',
-            (3, 3) => b'8',
-            (3, 4) => b'B',
-            (3, 5) => b'H',
-            (3, 6) => b'U',
-            (3, 7) => b'V',
-            
-            // Row 4: 9, I, J, 0, M, K, O, N
-            (4, 0) => b'9',
-            (4, 1) => b'I',
-            (4, 2) => b'J',
-            (4, 3) => b'0',
-            (4, 4) => b'M',
-            (4, 5) => b'K',
-            (4, 6) => b'O',
-            (4, 7) => b'N',
-            
-            // Row 5: +, P, L, -, ., :, @, ,
-            (5, 0) => b'+',
-            (5, 1) => b'P',
-            (5, 2) => b'L',
-            (5, 3) => b'-',
-            (5, 4) => b'.',
-            (5, 5) => b':',
-            (5, 6) => b'@',
-            (5, 7) => b',',
-            
-            // Row 6: Pound, *, ;, HOME, Right Shift, =, Up Arrow, /
-            (6, 0) => 0,   // Pound sign
-            (6, 1) => b'*',
-            (6, 2) => b';',
-            (6, 3) => 19,  // HOME
-            (6, 4) => 0,   // Right Shift (modifier)
-            (6, 5) => b'=',
-            (6, 6) => 145, // Cursor Up
-            (6, 7) => b'/',
-            
-            // Row 7: 1, Left Arrow, CTRL, 2, SPACE, Commodore, Q, Run/Stop
-            (7, 0) => b'1',
-            (7, 1) => 157, // Cursor Left
-            (7, 2) => 0,   // CTRL (modifier)
-            (7, 3) => b'2',
-            (7, 4) => b' ',
-            (7, 5) => 0,   // Commodore key
-            (7, 6) => b'Q',
-            (7, 7) => 3,   // RUN/STOP
-            
-            _ => 0,
-        }
-    }
+    // fn matrix_to_keycode(&self, row: u8, col: u8) -> u8 {
+    //     // C64 keyboard matrix to PETSCII mapping
+    //     // This is a simplified version - real C64 has shift/control handling
+    //     match (row, col) {
+    //         // Row 0
+    //         (0, 0) => 20,  // DEL
+    //         (0, 1) => 13,  // RETURN
+    //         (0, 2) => 29,  // Cursor Right
+    //         (0, 3) => 0,   // F7 (special)
+    //         (0, 4) => 0,   // F1 (special)
+    //         (0, 5) => 0,   // F3 (special)
+    //         (0, 6) => 0,   // F5 (special)
+    //         (0, 7) => 17,  // Cursor Down
+    //         
+    //         // Row 1: 3, W, A, 4, Z, S, E, Shift
+    //         (1, 0) => b'3',
+    //         (1, 1) => b'W',
+    //         (1, 2) => b'A',
+    //         (1, 3) => b'4',
+    //         (1, 4) => b'Z',
+    //         (1, 5) => b'S',
+    //         (1, 6) => b'E',
+    //         (1, 7) => 0,  // Left Shift (modifier)
+    //         
+    //         // Row 2: 5, R, D, 6, C, F, T, X
+    //         (2, 0) => b'5',
+    //         (2, 1) => b'R',
+    //         (2, 2) => b'D',
+    //         (2, 3) => b'6',
+    //         (2, 4) => b'C',
+    //         (2, 5) => b'F',
+    //         (2, 6) => b'T',
+    //         (2, 7) => b'X',
+    //         
+    //         // Row 3: 7, Y, G, 8, B, H, U, V
+    //         (3, 0) => b'7',
+    //         (3, 1) => b'Y',
+    //         (3, 2) => b'G',
+    //         (3, 3) => b'8',
+    //         (3, 4) => b'B',
+    //         (3, 5) => b'H',
+    //         (3, 6) => b'U',
+    //         (3, 7) => b'V',
+    //         
+    //         // Row 4: 9, I, J, 0, M, K, O, N
+    //         (4, 0) => b'9',
+    //         (4, 1) => b'I',
+    //         (4, 2) => b'J',
+    //         (4, 3) => b'0',
+    //         (4, 4) => b'M',
+    //         (4, 5) => b'K',
+    //         (4, 6) => b'O',
+    //         (4, 7) => b'N',
+    //         
+    //         // Row 5: +, P, L, -, ., :, @, ,
+    //         (5, 0) => b'+',
+    //         (5, 1) => b'P',
+    //         (5, 2) => b'L',
+    //         (5, 3) => b'-',
+    //         (5, 4) => b'.',
+    //         (5, 5) => b':',
+    //         (5, 6) => b'@',
+    //         (5, 7) => b',',
+    //         
+    //         // Row 6: Pound, *, ;, HOME, Right Shift, =, Up Arrow, /
+    //         (6, 0) => 0,   // Pound sign
+    //         (6, 1) => b'*',
+    //         (6, 2) => b';',
+    //         (6, 3) => 19,  // HOME
+    //         (6, 4) => 0,   // Right Shift (modifier)
+    //         (6, 5) => b'=',
+    //         (6, 6) => 145, // Cursor Up
+    //         (6, 7) => b'/',
+    //         
+    //         // Row 7: 1, Left Arrow, CTRL, 2, SPACE, Commodore, Q, Run/Stop
+    //         (7, 0) => b'1',
+    //         (7, 1) => 157, // Cursor Left
+    //         (7, 2) => 0,   // CTRL (modifier)
+    //         (7, 3) => b'2',
+    //         (7, 4) => b' ',
+    //         (7, 5) => 0,   // Commodore key
+    //         (7, 6) => b'Q',
+    //         (7, 7) => 3,   // RUN/STOP
+    //         
+    //         _ => 0,
+    //     }
+    // }
 }
 
 impl Memory for C64Memory {
@@ -428,25 +428,25 @@ impl Memory for C64Memory {
     }
 }
 
-// Simple memory for testing
-pub struct BasicMemory {
-    ram: [u8; 0x10000], // 64KB
-}
-
-impl BasicMemory {
-    pub fn new() -> Self {
-        Self {
-            ram: [0; 0x10000],
-        }
-    }
-}
-
-impl Memory for BasicMemory {
-    fn read(&self, addr: u16) -> u8 {
-        self.ram[addr as usize]
-    }
-
-    fn write(&mut self, addr: u16, value: u8) {
-        self.ram[addr as usize] = value;
-    }
-}
+// // Simple memory for testing
+// pub struct BasicMemory {
+//     ram: [u8; 0x10000], // 64KB
+// }
+// 
+// impl BasicMemory {
+//     pub fn new() -> Self {
+//         Self {
+//             ram: [0; 0x10000],
+//         }
+//     }
+// }
+// 
+// impl Memory for BasicMemory {
+//     fn read(&self, addr: u16) -> u8 {
+//         self.ram[addr as usize]
+//     }
+// 
+//     fn write(&mut self, addr: u16, value: u8) {
+//         self.ram[addr as usize] = value;
+//     }
+// }

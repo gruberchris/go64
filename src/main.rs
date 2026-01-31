@@ -11,7 +11,7 @@ mod keyboard;
 
 use anyhow::Result;
 use clap::Parser;
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::KeyCode;
 
 #[derive(Parser, Debug)]
 #[command(name = "go64")]
@@ -300,7 +300,7 @@ fn run_with_ui(_debug: bool) -> Result<()> {
             // Execute cycles and trigger IRQ once per frame
             const CYCLES_PER_FRAME: u64 = 16420;
             
-            let cycles_this_frame = 20000;
+            let cycles_this_frame = CYCLES_PER_FRAME;
             
             for _ in 0..cycles_this_frame {
                 // Execute one CPU instruction

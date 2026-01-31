@@ -107,10 +107,10 @@ pub fn map_key(key: KeyCode) -> Option<Vec<MatrixPosition>> {
     }
 }
 
-/// Check if a key is uppercase (needs shift if it's a letter)
-pub fn needs_shift(key: KeyCode) -> bool {
-    match key {
-        KeyCode::Char(c) => c.is_uppercase(),
-        _ => false,
-    }
-}
+    // /// Check if a key is uppercase (needs shift if it's a letter)
+    // pub fn needs_shift(key: KeyCode) -> bool {
+    //     match key {
+    //         KeyCode::Char(c) => c.is_uppercase(),
+    //         _ => false,
+    //     }
+    // }

@@ -100,16 +100,16 @@ impl Cia {
         }
     }
     
-    pub fn clear_icr(&mut self) {
-        // Reading ICR clears the interrupt flags (except bit 7 which indicates "interrupt occurred")
-        self.icr &= 0x80; // Keep only bit 7
-    }
+    // pub fn clear_icr(&mut self) {
+    //     // Reading ICR clears the interrupt flags (except bit 7 which indicates "interrupt occurred")
+    //     self.icr &= 0x80; // Keep only bit 7
+    // }
     
-    pub fn has_interrupt(&self) -> bool {
-        // Check if any enabled interrupt has occurred
-        // An interrupt fires if: (icr & icr_mask & 0x7F) != 0
-        (self.icr & self.icr_mask & 0x7F) != 0
-    }
+    // pub fn has_interrupt(&self) -> bool {
+    //     // Check if any enabled interrupt has occurred
+    //     // An interrupt fires if: (icr & icr_mask & 0x7F) != 0
+    //     (self.icr & self.icr_mask & 0x7F) != 0
+    // }
     
     pub fn write(&mut self, addr: u16, value: u8) {
         match addr & 0x0F {

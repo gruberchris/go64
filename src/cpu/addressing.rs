@@ -5,8 +5,8 @@ use crate::memory::Memory;
 
 #[derive(Debug, Clone, Copy)]
 pub enum AddressingMode {
-    Implied,
-    Accumulator,
+    // Implied,
+    // Accumulator,
     Immediate,
     ZeroPage,
     ZeroPageX,
@@ -115,7 +115,6 @@ impl Cpu {
                 let page_crossed = (self.pc & 0xFF00) != (addr & 0xFF00);
                 AddressResult { address: addr, page_crossed }
             }
-            _ => AddressResult { address: 0, page_crossed: false },
         }
     }
 }
