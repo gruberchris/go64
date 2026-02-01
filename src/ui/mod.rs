@@ -71,21 +71,25 @@ pub fn create_layout(area: Rect) -> (Rect, Rect, Rect) {
         .split(area);
     
     // Center the C64 screen vertically within the middle chunk
+    // Use a larger frame to accommodate the C64 border (approx 3 lines top/bottom)
+    let display_height = SCREEN_HEIGHT as u16 + 6; // 25 + 6 = 31
     let vertical_center = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Min(0),
-            Constraint::Length(SCREEN_HEIGHT as u16 + 2),
+            Constraint::Length(display_height),
             Constraint::Min(0),
         ])
         .split(chunks[1])[1];
 
     // Center the C64 screen horizontally
+    // Use a larger frame to accommodate the C64 border (approx 5 chars left/right)
+    let display_width = SCREEN_WIDTH as u16 + 10; // 40 + 10 = 50
     let screen_area = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Min(1),
-            Constraint::Length(SCREEN_WIDTH as u16 + 2), // +2 for borders
+            Constraint::Length(display_width),
             Constraint::Min(1),
         ])
         .split(vertical_center)[1];
@@ -103,21 +107,23 @@ pub fn create_simple_layout(area: Rect) -> (Rect, Rect) {
         .split(area);
     
     // Center the C64 screen vertically
+    let display_height = SCREEN_HEIGHT as u16 + 6; // 31
     let vertical_center = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Min(0),
-            Constraint::Length(SCREEN_HEIGHT as u16 + 2),
+            Constraint::Length(display_height),
             Constraint::Min(0),
         ])
         .split(chunks[0])[1];
 
     // Center the C64 screen horizontally
+    let display_width = SCREEN_WIDTH as u16 + 10; // 50
     let screen_area = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
             Constraint::Min(1),
-            Constraint::Length(SCREEN_WIDTH as u16 + 2), // +2 for borders
+            Constraint::Length(display_width), 
             Constraint::Min(1),
         ])
         .split(vertical_center)[1];
@@ -147,29 +153,47 @@ pub fn render_c64_screen(
     vic: &crate::vic::VicII,
     memory: &dyn crate::memory::Memory,
 ) {
-    let block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(c64_color_to_ratatui(vic.get_border_color())))
-        .style(Style::default().bg(c64_color_to_ratatui(vic.get_background_color())));
+    // 1. Render the Border
+    // The 'area' passed in is now the full frame (50x31) including the border.
+    // We fill this entire block with the Border Color.
+    let border_color = c64_color_to_ratatui(vic.get_border_color());
+    let border_block = Block::default()
+        .style(Style::default().bg(border_color));
+    frame.render_widget(border_block, area);
+
+    // 2. Calculate the Inner Screen Area (40x25) centered in the Border Area
+    // The Layout was calculated to be SCREEN_WIDTH + 10 wide, SCREEN_HEIGHT + 6 high.
+    // So we want to inset by 5 horizontally and 3 vertically.
     
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
+    // Safety check to ensure we don't panic if area is too small
+    let inner_x = area.x + (area.width.saturating_sub(SCREEN_WIDTH as u16)) / 2;
+    let inner_y = area.y + (area.height.saturating_sub(SCREEN_HEIGHT as u16)) / 2;
+    let inner_width = (SCREEN_WIDTH as u16).min(area.width);
+    let inner_height = (SCREEN_HEIGHT as u16).min(area.height);
     
-    // Render screen content line by line
+    let screen_rect = Rect::new(inner_x, inner_y, inner_width, inner_height);
+
+    // 3. Render the Background (Main Screen)
+    let bg_color = c64_color_to_ratatui(vic.get_background_color());
+    let screen_block = Block::default()
+        .style(Style::default().bg(bg_color));
+    frame.render_widget(screen_block, screen_rect);
+    
+    // 4. Render screen content line by line
     let mut lines = Vec::new();
-    for y in 0..SCREEN_HEIGHT.min(inner.height as usize) {
+    for y in 0..SCREEN_HEIGHT.min(screen_rect.height as usize) {
         let mut line_spans = Vec::new();
-        for x in 0..SCREEN_WIDTH.min(inner.width as usize) {
+        for x in 0..SCREEN_WIDTH.min(screen_rect.width as usize) {
             let (char_code, color) = vic.get_screen_char(memory, x, y);
             let ch = crate::vic::screen_code_to_char(char_code);
             let fg = c64_color_to_ratatui(C64Color::from_u8(color));
-            line_spans.push(Span::styled(ch.to_string(), Style::default().fg(fg)));
+            line_spans.push(Span::styled(ch.to_string(), Style::default().fg(fg).bg(bg_color)));
         }
         lines.push(Line::from(line_spans));
     }
     
     let paragraph = Paragraph::new(lines);
-    frame.render_widget(paragraph, inner);
+    frame.render_widget(paragraph, screen_rect);
 }
 
 pub fn render_status_bar(frame: &mut Frame, area: Rect, cpu: &crate::cpu::Cpu) {
@@ -194,7 +218,7 @@ fn c64_color_to_ratatui(color: C64Color) -> Color {
         C64Color::Cyan => Color::Rgb(170, 255, 238),
         C64Color::Purple => Color::Rgb(204, 68, 204),
         C64Color::Green => Color::Rgb(0, 204, 85),
-        C64Color::Blue => Color::Rgb(0, 0, 170),           // Dark blue for background
+        C64Color::Blue => Color::Rgb(53, 40, 121),           // Authentic Pepto Blue (Dark Purple-Blue)
         C64Color::Yellow => Color::Rgb(238, 238, 119),
         C64Color::Orange => Color::Rgb(221, 136, 85),
         C64Color::Brown => Color::Rgb(102, 68, 0),
@@ -202,7 +226,7 @@ fn c64_color_to_ratatui(color: C64Color) -> Color {
         C64Color::DarkGrey => Color::Rgb(51, 51, 51),
         C64Color::Grey => Color::Rgb(119, 119, 119),
         C64Color::LightGreen => Color::Rgb(170, 255, 102),
-        C64Color::LightBlue => Color::Rgb(0, 136, 255),   // Bright blue for text
+        C64Color::LightBlue => Color::Rgb(108, 108, 255),   // Authentic Pepto Light Blue (Periwinkle)
         C64Color::LightGrey => Color::Rgb(187, 187, 187),
     }
 }
