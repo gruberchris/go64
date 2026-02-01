@@ -267,17 +267,6 @@ impl Memory for C64Memory {
             
             // Zero page, stack, and low RAM
             0x0002..=0x9FFF => {
-                // Debug: Track reads of keyboard buffer
-                if addr == 0xC6 && self.ram[0xC6] > 0 {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/tmp/go64_kbd_debug.txt") {
-                        writeln!(file, "Reading keyboard buffer length $C6={}", self.ram[0xC6]).ok();
-                    }
-                }
                 self.ram[addr as usize]
             },
             
@@ -381,18 +370,6 @@ impl Memory for C64Memory {
                         }
                         // CIA1: $DC00-$DCFF
                         0xDC00..=0xDCFF => {
-                            use std::fs::OpenOptions;
-                            use std::io::Write;
-                            if addr == 0xDC0D || (addr >= 0xDC04 && addr <= 0xDC0F) {
-                                let mut file = OpenOptions::new()
-                                    .create(true)
-                                    .append(true)
-                                    .open("/tmp/go64_cia_write.txt")
-                                    .ok();
-                                if let Some(ref mut f) = file {
-                                    writeln!(f, "Write ${:04X} = ${:02X}", addr, value).ok();
-                                }
-                            }
                             self.cia1.write(addr, value);
                             return;
                         }
@@ -410,18 +387,6 @@ impl Memory for C64Memory {
             
             // All other writes go to RAM (ROMs are not writable)
             _ => {
-                // Debug: Log writes to screen memory
-                if addr >= 0x0400 && addr < 0x0800 && value >= 0x20 && value < 0x80 {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    if let Ok(mut file) = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/tmp/go64_kbd_debug.txt") {
-                        writeln!(file, "✍️  Screen write: addr=${:04X}, char=${:02X} ('{}')", 
-                                 addr, value, value as char).ok();
-                    }
-                }
                 self.ram[addr as usize] = value;
             }
         }

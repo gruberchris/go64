@@ -65,15 +65,6 @@ impl Cia {
                 // Return column states (active low) in PRB
                 let result = self.read_keyboard_columns();
                 
-                // Debug: Log when keyboard is being scanned
-                if result != 0xFF {  // 0xFF means no keys pressed
-                    use std::io::Write;
-                    let _ = std::fs::OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/tmp/go64_keyboard.txt")
-                        .and_then(|mut f| writeln!(f, "CIA read $DC01: PRA=${:02X} -> result=${:02X}", self.pra, result));
-                }
                 result
             },
             0x02 => self.ddra,
@@ -143,42 +134,16 @@ impl Cia {
                 // ICR mask register write
                 // Bit 7 = 1: SET interrupt mask bits
                 // Bit 7 = 0: CLEAR interrupt mask bits
-                use std::fs::OpenOptions;
-                use std::io::Write;
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open("/tmp/go64_cia_debug.txt")
-                    .ok();
-                    
                 if value & 0x80 != 0 {
                     // Set mask bits
                     self.icr_mask |= value & 0x7F;
-                    if let Some(ref mut f) = file {
-                        writeln!(f, "CIA ICR mask SET ${:02X} -> mask now ${:02X}", value & 0x7F, self.icr_mask).ok();
-                    }
                 } else {
                     // Clear mask bits
                     self.icr_mask &= !(value & 0x7F);
-                    if let Some(ref mut f) = file {
-                        writeln!(f, "CIA ICR mask CLEAR ${:02X} -> mask now ${:02X}", value & 0x7F, self.icr_mask).ok();
-                    }
                 }
             }
             0x0E => {
                 self.cra = value;
-                if value & 0x01 != 0 {
-                    use std::fs::OpenOptions;
-                    use std::io::Write;
-                    let mut file = OpenOptions::new()
-                        .create(true)
-                        .append(true)
-                        .open("/tmp/go64_cia_debug.txt")
-                        .ok();
-                    if let Some(ref mut f) = file {
-                        writeln!(f, "CIA Timer A started! CRA=${:02X}, Timer=${:04X}", value, self.timer_a).ok();
-                    }
-                }
             }
             0x0F => {
                 self.crb = value;

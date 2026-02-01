@@ -343,14 +343,6 @@ impl Cpu {
     pub fn irq(&mut self, memory: &mut dyn crate::memory::Memory) {
         // Only trigger if interrupts are enabled
         if !self.status.interrupt {
-            // Debug: log IRQ (temporary for debugging)
-            // use std::io::Write;
-            // let _ = std::fs::OpenOptions::new()
-            //    .create(true)
-            //    .append(true)
-            //    .open("/tmp/go64_irq.txt")
-            //    .and_then(|mut f| writeln!(f, "IRQ at PC=${:04X}", self.pc));
-
             // Push PC and status to stack
             let pc_hi = (self.pc >> 8) as u8;
             let pc_lo = (self.pc & 0xFF) as u8;

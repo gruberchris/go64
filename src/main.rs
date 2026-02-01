@@ -174,25 +174,11 @@ fn run_with_ui(_debug: bool) -> Result<()> {
     let roms_loaded = match io::RomSet::load_from_directory("roms") {
         Ok(_roms) => {
             println!("✅ ROMs loaded successfully!");
-            use std::io::Write;
-            let _ = std::fs::OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open("/tmp/go64_keyboard.txt")
-                .and_then(|mut f| writeln!(f, "🟢 STARTUP: roms_loaded = true"));
             true
         }
         Err(e) => {
             println!("⚠️  Could not load ROMs: {}", e);
             println!("Running in demo mode without ROMs...\n");
-            use std::io::Write;
-            let _ = std::fs::OpenOptions::new()
-                .create(true)
-                .write(true)
-                .truncate(true)
-                .open("/tmp/go64_keyboard.txt")
-                .and_then(|mut f| writeln!(f, "🔴 STARTUP: roms_loaded = false, error: {}", e));
             false
         }
     };
@@ -268,16 +254,6 @@ fn run_with_ui(_debug: bool) -> Result<()> {
                 KeyCode::F(10) => {
                     // Enable/toggle CPU execution
                     running_cpu = !running_cpu;
-                    if running_cpu {
-                        use std::fs::OpenOptions;
-                        use std::io::Write;
-                        if let Ok(mut file) = OpenOptions::new()
-                            .create(true)
-                            .append(true)
-                            .open("/tmp/go64_kbd_debug.txt") {
-                            writeln!(file, "=== CPU execution enabled at PC=${:04X} ===", cpu.pc).ok();
-                        }
-                    }
                 }
                 KeyCode::PageUp => {
                     // RESTORE key simulation (NMI)
@@ -291,13 +267,6 @@ fn run_with_ui(_debug: bool) -> Result<()> {
                 _ => {
                     // Map terminal key to C64 keyboard matrix
                     if let Some(positions) = keyboard::map_key(key.code) {
-                        use std::io::Write;
-                        let _ = std::fs::OpenOptions::new()
-                            .create(true)
-                            .append(true)
-                            .open("/tmp/go64_keyboard.txt")
-                            .and_then(|mut f| writeln!(f, "🎹 Key {:?} -> positions: {:?}", key.code, positions));
-                        
                         // Set in CIA matrix - BASIC will read via our intercepted GETIN
                         for (row, col) in positions {
                             memory.cia1.set_key(row, col, true);
