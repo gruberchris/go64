@@ -186,8 +186,14 @@ impl Cpu {
                         let end_addr = load_addr + data.len() as u16;
                         memory.write(0xAE, (end_addr & 0xFF) as u8);
                         memory.write(0xAF, ((end_addr >> 8) & 0xFF) as u8);
+                        
+                        // Update BASIC pointers to ensure old program is "gone"
                         memory.write(0x2D, (end_addr & 0xFF) as u8);
                         memory.write(0x2E, ((end_addr >> 8) & 0xFF) as u8);
+                        memory.write(0x2F, (end_addr & 0xFF) as u8);
+                        memory.write(0x30, ((end_addr >> 8) & 0xFF) as u8);
+                        memory.write(0x31, (end_addr & 0xFF) as u8);
+                        memory.write(0x32, ((end_addr >> 8) & 0xFF) as u8);
                         
                         // Success
                         self.status.carry = false;
@@ -235,6 +241,12 @@ impl Cpu {
                     // $2D/$2E = End of Basic Variables (for BASIC LOAD)
                     memory.write(0x2D, (end_addr & 0xFF) as u8);
                     memory.write(0x2E, ((end_addr >> 8) & 0xFF) as u8);
+
+                    // $2F-$32: Start/End of Arrays (Set to End of Program)
+                    memory.write(0x2F, (end_addr & 0xFF) as u8);
+                    memory.write(0x30, ((end_addr >> 8) & 0xFF) as u8);
+                    memory.write(0x31, (end_addr & 0xFF) as u8);
+                    memory.write(0x32, ((end_addr >> 8) & 0xFF) as u8);
                     
                     // Success
                     self.status.carry = false;
