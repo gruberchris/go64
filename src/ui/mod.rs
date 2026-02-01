@@ -65,11 +65,21 @@ pub fn create_layout(area: Rect) -> (Rect, Rect, Rect) {
         .direction(Direction::Vertical)
         .constraints([
             Constraint::Length(3),     // Title bar
-            Constraint::Min(SCREEN_HEIGHT as u16 + 2), // C64 screen + borders
+            Constraint::Min(1),        // Flexible middle area
             Constraint::Length(3),     // Status bar
         ])
         .split(area);
     
+    // Center the C64 screen vertically within the middle chunk
+    let vertical_center = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(0),
+            Constraint::Length(SCREEN_HEIGHT as u16 + 2),
+            Constraint::Min(0),
+        ])
+        .split(chunks[1])[1];
+
     // Center the C64 screen horizontally
     let screen_area = Layout::default()
         .direction(Direction::Horizontal)
@@ -78,7 +88,7 @@ pub fn create_layout(area: Rect) -> (Rect, Rect, Rect) {
             Constraint::Length(SCREEN_WIDTH as u16 + 2), // +2 for borders
             Constraint::Min(1),
         ])
-        .split(chunks[1])[1];
+        .split(vertical_center)[1];
     
     (chunks[0], screen_area, chunks[2])
 }
@@ -87,11 +97,21 @@ pub fn create_simple_layout(area: Rect) -> (Rect, Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Min(SCREEN_HEIGHT as u16 + 2), // C64 screen + borders
+            Constraint::Min(1),        // Flexible middle area
             Constraint::Length(1),     // Minimal status line
         ])
         .split(area);
     
+    // Center the C64 screen vertically
+    let vertical_center = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Min(0),
+            Constraint::Length(SCREEN_HEIGHT as u16 + 2),
+            Constraint::Min(0),
+        ])
+        .split(chunks[0])[1];
+
     // Center the C64 screen horizontally
     let screen_area = Layout::default()
         .direction(Direction::Horizontal)
@@ -100,7 +120,7 @@ pub fn create_simple_layout(area: Rect) -> (Rect, Rect) {
             Constraint::Length(SCREEN_WIDTH as u16 + 2), // +2 for borders
             Constraint::Min(1),
         ])
-        .split(chunks[0])[1];
+        .split(vertical_center)[1];
     
     (screen_area, chunks[1])
 }
