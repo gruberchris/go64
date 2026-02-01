@@ -132,7 +132,7 @@ pub fn create_simple_layout(area: Rect) -> (Rect, Rect) {
 }
 
 pub fn render_simple_status(frame: &mut Frame, area: Rect) {
-    let status = "F1: Debug | F5: Pause/Resume | PgUp: Restore | ESC: Quit";
+    let status = "F9: Debug | F10: Pause/Resume | PgUp: Restore | ESC: Quit";
     let paragraph = Paragraph::new(status)
         .style(Style::default().fg(Color::DarkGray))
         .alignment(Alignment::Center);
@@ -198,7 +198,7 @@ pub fn render_c64_screen(
 
 pub fn render_status_bar(frame: &mut Frame, area: Rect, cpu: &crate::cpu::Cpu) {
     let status = format!(
-        "PC:${:04X} A:${:02X} X:${:02X} Y:${:02X} SP:${:02X} Cyc:{} | F1:Hide | F5:Pause | PgUp:Rst | ESC:Quit",
+        "PC:${:04X} A:${:02X} X:${:02X} Y:${:02X} SP:${:02X} Cyc:{} | F9:Hide | F10:Pause | PgUp:Rst | ESC:Quit",
         cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.cycles
     );
     

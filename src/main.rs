@@ -261,11 +261,11 @@ fn run_with_ui(_debug: bool) -> Result<()> {
                     // Quit the emulator
                     break 'mainloop;
                 },
-                KeyCode::F(1) => {
+                KeyCode::F(9) => {
                     // Toggle debug view
                     show_debug = !show_debug;
                 }
-                KeyCode::F(5) => {
+                KeyCode::F(10) => {
                     // Enable/toggle CPU execution
                     running_cpu = !running_cpu;
                     if running_cpu {

@@ -32,10 +32,10 @@ A Commodore 64 emulator written in Rust with a terminal-based UI (TUI). It emula
 ## Controls
 
 *   **ESC**: Quit the emulator
-*   **F1**: Toggle Debug Overlay (CPU registers, PC, cycles)
+*   **F9**: Toggle Debug Overlay (CPU registers, PC, cycles)
 *   **PageUp**: `RESTORE` key (triggers NMI).
 *   **Tab**: `RUN/STOP` key. (Hold `Tab` + Press `PageUp` for Soft Reset/Restore).
-*   **F5**: Toggle CPU execution (pause/resume)
+*   **F10**: Toggle CPU execution (pause/resume)
 *   **Typing**: Maps your PC keyboard to the C64 keyboard matrix.
 
 ## Emulation Status
@@ -81,13 +81,13 @@ The emulator provides High-Level Emulation (HLE) of a 1541 Disk Drive on **Devic
 The emulator includes a built-in debug overlay for inspecting the internal state of the 6502 CPU and emulator.
 
 ### Using the Debug Overlay
-Press **F1** at any time to toggle the debug overlay. This will:
+Press **F9** at any time to toggle the debug overlay. This will:
 1.  Add a status bar to the bottom of the screen.
 2.  Display real-time CPU register values (PC, A, X, Y, SP) and cycle count.
 
 ### Debug Controls
-*   **F1**: Toggle the debug overlay on/off.
-*   **F5**: **Pause/Resume execution**. Use this to freeze the emulator state for inspection.
+*   **F9**: Toggle the debug overlay on/off.
+*   **F10**: **Pause/Resume execution**. Use this to freeze the emulator state for inspection.
 *   **PageUp**: **RESTORE** (NMI).
 *   **Tab**: **RUN/STOP**.
     *   **Soft Reset:** Hold `Tab` (Run/Stop) and press `PageUp` (Restore) to reset the computer (clear screen, reset colors) without rebooting.
